@@ -1,6 +1,7 @@
 framework: mocha+chai
 before_tests: npm run build-test
 src_files:
+- src/*.coffee
 - test/*.coffee
 serve_files:
 - test/bundle.js
