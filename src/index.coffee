@@ -1,8 +1,6 @@
 mdast = require 'mdast'
 preprocess = require './preprocess'
 
-ATTR_WHITELIST = ['href', 'src', 'target']
-
 $ = React.createElement
 
 defaultHTMLWrapperComponent = React.createClass
@@ -25,35 +23,37 @@ defaultHTMLWrapperComponent = React.createClass
       style:
         border: 'none'
 
-isValidDocument = (doc) ->
-  parsererrorNS = (new DOMParser()).parseFromString('INVALID', 'text/xml').getElementsByTagName("parsererror")[0].namespaceURI
-  doc.getElementsByTagNameNS(parsererrorNS, 'parsererror').length == 0
-
-getPropsFromHTMLNode = (node, attrWhitelist) ->
-  string =
-    if node.subtype is 'folded'
-      node.startTag.value + node.endTag.value
-    else if node.subtype is 'void'
-      node.value
-    else
-      null
-  if !string?
-    return null
-
-  parser = new DOMParser()
-  doc = parser.parseFromString(string, 'text/html')
-  if !isValidDocument(doc)
-    return null
-
-  attrs = doc.body.firstElementChild.attributes
-  props = {}
-  for i in [0...attrs.length]
-    attr = attrs.item(i)
-    if !attrWhitelist? or (attr.name in attrWhitelist)
-      props[attr.name] = attr.value
-  props
-
 module.exports = class Compiler
+
+  @ATTR_WHITELIST: ['href', 'src', 'target']
+
+  @getPropsFromHTMLNode: (node, attrWhitelist) ->
+    string =
+      if node.subtype is 'folded'
+        node.startTag.value + node.endTag.value
+      else if node.subtype is 'void'
+        node.value
+      else
+        null
+    if !string?
+      return null
+
+    parser = new DOMParser()
+    doc = parser.parseFromString(string, 'text/html')
+    if !@isValidDocument(doc)
+      return null
+
+    attrs = doc.body.firstElementChild.attributes
+    props = {}
+    for i in [0...attrs.length]
+      attr = attrs.item(i)
+      if !attrWhitelist? or (attr.name in attrWhitelist)
+        props[attr.name] = attr.value
+    props
+
+  @isValidDocument: (doc) ->
+    parsererrorNS = (new DOMParser()).parseFromString('INVALID', 'text/xml').getElementsByTagName("parsererror")[0].namespaceURI
+    doc.getElementsByTagNameNS(parsererrorNS, 'parsererror').length == 0
 
   constructor: (@options = {}) ->
     @sanitize = @options.sanitize ? true
@@ -205,12 +205,12 @@ module.exports = class Compiler
         $ node.tagName, props
     else if node.subtype is 'folded'
       k = key+'_'+node.tagName
-      props = getPropsFromHTMLNode(node, ATTR_WHITELIST) ? {}
+      props = @constructor.getPropsFromHTMLNode(node, @constructor.ATTR_WHITELIST) ? {}
       props.key = k
       $ node.startTag.tagName, props, @toChildren(node, defs, k)
     else if node.subtype is 'void'
       k = key+'_'+node.tagName
-      props = getPropsFromHTMLNode(node, ATTR_WHITELIST) ? {}
+      props = @constructor.getPropsFromHTMLNode(node, @constructor.ATTR_WHITELIST) ? {}
       props.key = k
       $ node.tagName, props
     else if node.subtype is 'special'
