@@ -141,7 +141,7 @@ module.exports = class Compiler
     # There's no corresponding definition; render reference as plain text.
     $ 'span', {key}, "[^#{node.identifier}]"
   footnoteDefinitionCollection: (node, defs, key, tableAlign) ->
-    items = node.children.map (def, i) ->
+    items = node.children.map (def, i) =>
       k = key+'-ol-li'+i
       # If `def` has children, we use them as `defBody`. And If `def` doesn't
       # have any, then it should have `link` text, so we use it.
